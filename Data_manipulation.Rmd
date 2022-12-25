@@ -1,0 +1,65 @@
+---
+title: "Data manipulation"
+author: "ShunXie"
+date: "2022-12-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+```
+
+
+Read all data
+```{r}
+All_files_names = list.files("data/")
+
+All_files = 
+  read_csv("initialdata/propertyval.csv", show_col_types = FALSE) %>% 
+  janitor::clean_names() %>% 
+  select(-fact_note)
+
+for (i in 1:length(All_files_names)){
+  newfile = read_csv(str_c("data/",All_files_names[i]), show_col_types = FALSE) %>% 
+    janitor::clean_names() %>% 
+    select(-fact,-fact_note)
+  
+  All_files = cbind(All_files, newfile)
+}
+
+Cleaned_file = 
+  All_files %>% 
+  janitor::clean_names() %>% 
+  select(-starts_with("value"))
+
+colnames(Cleaned_file)<-gsub("_new_york","",colnames(Cleaned_file))
+
+```
+
+```{r}
+m1 <- t(Cleaned_file)
+Merged_file_temp <- data.frame(r1= row.names(m1), m1, row.names=NULL) 
+
+names(Merged_file_temp) <- Merged_file_temp[1,] 
+Merged_file <- Merged_file_temp[-1,] 
+Merged_file <- Merged_file[,1:68] 
+Merged_file = Merged_file %>% 
+  rename(county_name=fact)
+
+write.csv(Merged_file, "result/Merged_data.csv", row.names=FALSE)
+```
+
+```{r}
+library("xlsx")
+# Write the first data set in a new workbook
+write.xlsx(Merged_file, file = "result/Merged_file.xlsx",
+      sheetName = "Merged_data", append = FALSE)
+```
+
+
+
