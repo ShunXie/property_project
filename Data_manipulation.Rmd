@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(dplyr)
+
 ```
 
 # Data 1
@@ -19,7 +20,7 @@ library(dplyr)
 from website https://www.census.gov/quickfacts/fact/table/bronxcountynewyork/HSG495221#HSG495221
 
 
-Read all data
+Read all datas
 ```{r}
 All_files_names = list.files("data/")
 
