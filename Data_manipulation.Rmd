@@ -12,10 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(dplyr)
+
 ```
 
 
-Read all data
+Read all datas
 ```{r}
 All_files_names = list.files("data/")
 
