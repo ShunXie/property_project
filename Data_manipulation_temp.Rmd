@@ -1,0 +1,311 @@
+---
+title: "Data manipulation"
+author: "ShunXie"
+date: "2022-12-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+library(dplyr)
+
+```
+
+# Data 1
+
+from website https://www.census.gov/quickfacts/fact/table/bronxcountynewyork/HSG495221#HSG495221
+
+
+Read all datas
+```{r}
+All_files_names = list.files("data/")
+
+All_files = 
+  read_csv("initialdata/propertyval.csv", show_col_types = FALSE) %>% 
+  janitor::clean_names() %>% 
+  select(-fact_note)
+
+for (i in 1:length(All_files_names)){
+  newfile = read_csv(str_c("data/",All_files_names[i]), show_col_types = FALSE) %>% 
+    janitor::clean_names() %>% 
+    select(-fact,-fact_note)
+  
+  All_files = cbind(All_files, newfile)
+}
+
+Cleaned_file = 
+  All_files %>% 
+  janitor::clean_names() %>% 
+  select(-starts_with("value"))
+
+colnames(Cleaned_file)<-gsub("_new_york","",colnames(Cleaned_file))
+
+```
+
+```{r}
+m1 <- t(Cleaned_file)
+Merged_file_temp <- data.frame(r1= row.names(m1), m1, row.names=NULL) 
+
+names(Merged_file_temp) <- Merged_file_temp[1,] 
+Merged_file <- Merged_file_temp[-1,] 
+Merged_file <- Merged_file[,1:68] 
+Merged_file = Merged_file %>% 
+  rename(county_name=fact)
+
+write.csv(Merged_file, "result/Merged_data.csv", row.names=FALSE)
+```
+
+```{r}
+library("xlsx")
+# Write the first data set in a new workbook
+write.xlsx(Merged_file, file = "result/Merged_file.xlsx",
+      sheetName = "Merged_data", append = FALSE)
+```
+
+
+# Data 2
+
+from website https://www.nar.realtor/research-and-statistics/housing-statistics/county-median-home-prices-and-monthly-mortgage-payment
+
+
+
+```{r}
+#require(tidyverse)
+#require(pdftools)
+#require(lubridate)
+#require(kableExtra)
+library(devtools)
+#devtools::install_github("ropensci/tabulizer")
+library(tabulizer)
+```
+
+```{r}
+rawfile <- "datawithallcounty/2022Q3.pdf"
+rawlines <- extract_tables(rawfile)
+
+```
+
+
+
+
+```{r}
+dsQ3 = rawlines[[1]]
+
+for (i in 2:(length(rawlines)-1)){
+dsQ3 = rbind(dsQ3, rawlines[[i]])
+  }
+
+```
+
+```{r}
+dsQ3_new = janitor::row_to_names(dsQ3, row_number = 1) 
+dsQ3_clean = dsQ3_new %>%
+  as.tibble() %>% 
+  janitor::clean_names() %>% 
+  separate(county_name, into = c("county_name", "state_name"), sep = ",") %>% 
+  mutate(median_2022=as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',median_home_price_q3_2022)),
+         monthly_pay_2021=as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',monthly_payment_q3_2021)),
+         monthly_pay_2022=as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',monthly_payment_q3_2022)),
+         county_name = janitor::make_clean_names(county_name)) %>% 
+  select(-median_home_price_q3_2022,-monthly_payment_q3_2021,-monthly_payment_q3_2022,-state_name) 
+  
+dsQ3_clean
+
+```
+
+
+
+
+```{r}
+all_data = inner_join(Merged_file,dsQ3_clean, by="county_name") 
+```
+
+
+# Calculate rate of increase
+
+```{r}
+library(janitor)
+all_data_clean = all_data %>% clean_names() %>% mutate(median_value_of_owner_occupied_housing_units_2017_2021=as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',median_value_of_owner_occupied_housing_units_2017_2021)))
+#change in mortgage payment
+all_data_clean$percent_increase_mortgage = round((all_data$monthly_pay_2022-all_data$monthly_pay_2021)/all_data$monthly_pay_2021*100,2)
+#change in price
+all_data_clean$percent_increase_house_price = round((all_data$median_2022-all_data_clean$median_value_of_owner_occupied_housing_units_2017_2021)/all_data_clean$median_value_of_owner_occupied_housing_units_2017_2021*100,2)
+  
+
+```
+
+# Correlation
+
+```{r}
+all_data_num = 
+  all_data_clean %>% 
+  mutate(
+    black_or_african_american_alone_percent =  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',black_or_african_american_alone_percent)),
+    population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021)),
+    language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021)),
+    bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021)),
+    total_health_care_and_social_assistance_receipts_revenue_2017_1_000=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',total_health_care_and_social_assistance_receipts_revenue_2017_1_000)),
+    mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021)),
+    median_household_income_in_2021_dollars_2017_2021=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',median_household_income_in_2021_dollars_2017_2021)),
+    total_employment_percent_change_2019_2020=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',total_employment_percent_change_2019_2020)),
+    population_per_square_mile_2020=  as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',population_per_square_mile_2020))) %>% 
+      mutate(
+        median_house = median_value_of_owner_occupied_housing_units_2017_2021,
+        black=black_or_african_american_alone_percent,
+        pop_change = population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021, 
+        non_english=language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021, 
+        bachelor=bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021,
+        healthcare = total_health_care_and_social_assistance_receipts_revenue_2017_1_000,
+        travel_time=mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021,
+        median_income=median_household_income_in_2021_dollars_2017_2021,
+        change_employment=total_employment_percent_change_2019_2020,
+        pop_per_mile = population_per_square_mile_2020
+        )
+        
+all_data_cleanname_num = all_data_num %>% select(-median_value_of_owner_occupied_housing_units_2017_2021,-black_or_african_american_alone_percent,-population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021,-language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021,-bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021,-total_health_care_and_social_assistance_receipts_revenue_2017_1_000,-mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021,-median_household_income_in_2021_dollars_2017_2021,-total_employment_percent_change_2019_2020,-population_per_square_mile_2020)
+```
+
+
+```{r}
+library(corrplot)
+library(cowplot)
+House_data = all_data_num %>% 
+  select(median_house, black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile) %>% 
+  na.omit()
+
+House_data_all = all_data_num %>% 
+  select(median_house, median_2022, monthly_pay_2021,monthly_pay_2022,percent_increase_mortgage, percent_increase_house_price,black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile) %>% 
+  na.omit()
+
+
+res = cor(House_data)
+corrplot(res, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+
+
+
+
+
+# lm model
+
+```{r}
+  
+lmmodel = lm(median_value_of_owner_occupied_housing_units_2017_2021~black_or_african_american_alone_percent+population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021+language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021+bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021+total_health_care_and_social_assistance_receipts_revenue_2017_1_000+mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021+median_household_income_in_2021_dollars_2017_2021+total_employment_percent_change_2019_2020+population_per_square_mile_2020,all_data_num)
+
+
+```
+
+```{r}
+summary(lmmodel)
+```
+
+```{r}
+lmmodel2 = lm(median_2022~black_or_african_american_alone_percent+population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021+language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021+bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021+total_health_care_and_social_assistance_receipts_revenue_2017_1_000+mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021+median_household_income_in_2021_dollars_2017_2021+total_employment_percent_change_2019_2020+population_per_square_mile_2020,all_data_num)
+
+summary(lmmodel2)
+```
+
+
+```{r}
+lmmodel3 = lm(monthly_pay_2021~black_or_african_american_alone_percent+population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021+language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021+bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021+total_health_care_and_social_assistance_receipts_revenue_2017_1_000+mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021+median_household_income_in_2021_dollars_2017_2021+total_employment_percent_change_2019_2020+population_per_square_mile_2020,all_data_num)
+
+summary(lmmodel3)
+```
+
+
+```{r}
+lmmodel4 = lm(percent_increase_mortgage~black_or_african_american_alone_percent+population_percent_change_april_1_2020_estimates_base_to_july_1_2021_v2021+language_other_than_english_spoken_at_home_percent_of_persons_age_5_years_2017_2021+bachelors_degree_or_higher_percent_of_persons_age_25_years_2017_2021+total_health_care_and_social_assistance_receipts_revenue_2017_1_000+mean_travel_time_to_work_minutes_workers_age_16_years_2017_2021+median_household_income_in_2021_dollars_2017_2021+total_employment_percent_change_2019_2020+population_per_square_mile_2020,all_data_num)
+
+summary(lmmodel4)
+```
+
+
+
+#Lasso Selection
+
+```{r}
+#make all data numeric
+make_numeric = function(column){ 
+   as.numeric(gsub(pattern = "[^0-9.-]", replacement = '',column))
+}
+
+make_numeric(Data_X[[1]])
+```
+
+
+```{r}
+# supply sequence of lambda values for the lasso cross validation for lambda
+lambda_seq <- 10^seq(-3, 0, by = .1)
+set.seed(2022)
+
+for(i in 1:length(all_data_cleanname_num)){
+  all_data_cleanname_num[[i]]=make_numeric(all_data_cleanname_num[[i]])
+}
+
+
+# save matrix of predictors to pass to the lasso function
+Data_X_temp <-
+all_data_cleanname_num %>% 
+select( black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile,female_persons_percent,persons_under_18_years_percent,white_alone_percent,american_indian_and_alaska_native_alone_percent,asian_alone_percent,two_or_more_races_percent,hispanic_or_latino_percent,veterans_2017_2021,foreign_born_persons_percent_2017_2021,housing_units_july_1_2021_v2021,owner_occupied_housing_unit_rate_2017_2021,median_gross_rent_2017_2021,per_capita_income_in_past_12_months_in_2021_dollars_2017_2021) 
+
+
+
+Data_X = Data_X_temp[ , colSums(is.na(Data_X_temp)) == 0]
+
+
+
+Data_x = 
+  as.matrix(Data_X)
+
+Data_y <-
+all_data_cleanname_num %>% 
+select(percent_increase_house_price) %>% 
+as.matrix()
+
+cv_lasso_fit <- glmnet::cv.glmnet(x = Data_X,
+y = Data_y,
+lambda = lambda_seq,
+nfolds = 5)
+cv_lasso_fit
+
+
+lasso_fit <- glmnet::glmnet(x = Data_X,
+y = Data_y,
+lambda = cv_lasso_fit$lambda.min)
+coef(lasso_fit)
+```
+
+```{r}
+#adjusted R square
+library(grid)
+library(gridExtra)
+library(cowplot)
+library(corrplot)
+library(leaps)
+library(glmnet)
+library(caret)
+# Printing the 2 best models of each size, using the adjusted R square criterion:
+leaps(x = Data_X, y = Data_y, nbest = 2, method = "adjr2")
+
+```
+```{r}
+
+
+best = regsubsets(percent_increase_house_price ~ ., data = House_data_all)
+rs = summary(best)
+# plot of Cp and Adj-R2 as functions of parameters
+par(mfrow=c(1,2))
+plot(2:9, rs$cp, xlab="No of parameters", ylab="Cp Statistic")
+abline(0,1)
+plot(2:9, rs$adjr2, xlab="No of parameters", ylab="Adj R2")
+```
+
+
+
+
