@@ -1,0 +1,39 @@
+---
+title: "House_report"
+output: html_document
+date: "2023-01-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# House report
+
+
+## Data
+
+The data for median house price per square feet is extracted from [website](https://www.rate.com/research). The data for number of home sold and median days on the market is captured from the [website](https://www.redfin.com/city/30748/NY/Bedford/housing-market.)
+
+
+
+The excel file created for data analytics contains towns that has the following property:
+
+<br>
+
+#### Target area
+
+This is the area we focus on. There are five areas, namely Scarsdale, Purchase, Rye, Bedford, Chappaqua.
+
+(This is the testing dataset. I create a linear model based on other area to predict the potential house price per square feet. So that it can show if the price still has potential to increase)
+
+<br>
+
+#### High median price per square foot
+
+In accordance to [move.org](https://www.move.org/americas-most-expensive-cities-per-square-foot/) webpage, cities like San Francisco, Boston and New York City have the mosty expensive house price per unit. We are interested in the area that is not a popular city but with a high price.  Therefore, I choose Fremont, CA, Oakland, CA, San Jose, CA and Honolulu. 
+
+
+
+
+

@@ -329,9 +329,17 @@ plot(2:9, rs$adjr2, xlab="No of parameters", ylab="Adj R2")
 ```
 
 
-## Pearson Correlation
+## Pearson Correlation and Distance Correlation
+
+ A small difference between the Pearson and distance correlation values might associate with linearity. A greater Pearson coefficient than distance correlation value indicates the potential for outliers in the direction of the regression line of the normal data. A smaller Pearson coefficient than the distance correlation value indicates a nonlinear relationship or outliers in the normal direction of the regression line.
 
 ```{r}
+
+House_data = all_data_num %>% 
+  dplyr::select(median_house, black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile,num_school_district,student_n) %>% 
+  na.omit()
+
+res = cor(House_data)
 
 library(ppcor)
 
@@ -339,8 +347,36 @@ res1 = pcor(House_data)
 
 corrplot(res1$estimate, type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
+
+
+
+#library(dccpp)
+library(dcov)
+
+
+
+
+
+
 Pearson_table = tibble(var_name=colnames(data.frame(res1$estimate)), Pearson_corr =data.frame(res)$median_house, Partial_Pearson_corr=data.frame(res1$estimate)$median_house
 )
+Pearson_table=Pearson_table[2:12,]
+
+Pearson_table$dcor = 0
+Pearson_table$pdcor = 0
+
+House_data_temp = House_data[,-1]
+for (i in 1:11){
+  Pearson_table$dcor[i] = dcor(House_data[,i+1], House_data$median_house)
+  Pearson_table$pdcor[i] = pdcor(House_data[,i+1], House_data$median_house,House_data_temp[,-i])
+
+}
+
+
+
+
+
+
 Pearson_table
 
 
@@ -350,7 +386,7 @@ Pearson_table
 
 ```{r}
 House_data2 = all_data_num %>% 
-  dplyr::select(median_2022, black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile) %>% 
+  dplyr::select(median_2022, black, pop_change, non_english,bachelor,healthcare,travel_time,median_income,change_employment,pop_per_mile,num_school_district,student_n) %>% 
   na.omit()
 
 
@@ -362,8 +398,25 @@ res2_p = pcor(House_data2)
 corrplot(res2_p$estimate, type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
 
+
+
+
 Pearson_table2 = tibble(var_name=colnames(data.frame(res2_p$estimate)), Pearson_corr =data.frame(res2)$median_2022, Partial_Pearson_corr=data.frame(res2_p$estimate)$median_2022
 )
+
+Pearson_table2=Pearson_table2[2:12,]
+
+Pearson_table2$dcor = 0
+Pearson_table2$pdcor = 0
+
+House_data_temp2 = House_data2[,-1]
+for (i in 1:11){
+  Pearson_table2$dcor[i] = dcor(House_data2[,i+1], House_data2$median_2022)
+  Pearson_table2$pdcor[i] = pdcor(House_data2[,i+1], House_data2$median_2022,House_data_temp2[,-i])
+
+}
+
+
 Pearson_table2
 
 ```
