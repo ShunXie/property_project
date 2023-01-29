@@ -89,5 +89,173 @@ It is an incomplete table which may be some potential cities that are worth to i
 
 ## Results
 
+```{r,echo=FALSE,message=FALSE}
+library("tidyverse")
+library("dplyr")
+library("readxl")
+library(ggplot2)
+library(reshape2)
+library(ggfortify)
+
+```
 
 
+```{r,echo=FALSE}
+house_price = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 1)
+num_sold = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 2)
+medium_time = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 3)
+all_info = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 4)
+```
+
+
+
+
+
+```{r,include=FALSE}
+all_hp = t(all_info[1:15,3:7])
+data_df_allhp = melt(all_hp)
+data_df_allhp_named = 
+  data_df_allhp %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6, "Fremont",ifelse(Var2==7, "Oakland", ifelse(Var2==8, "San Jose", ifelse(Var2==9, "Honolulu", ifelse(Var2==10, "San Francisco", ifelse(Var2==11, "Boston", ifelse(Var2==12,"Washington", ifelse(Var2==13, "Los Angeles", ifelse(Var2==14, "Houston","Seattle")))))))))))))),
+         ind = rep(1:5,15),
+         HousePrice = Var2)
+ggplot(data_df_allhp_named, aes(x=ind, y=value, color = HousePrice))+
+  geom_line()+
+  labs(
+    y="house price",
+    x="time"
+  )+
+  scale_x_continuous(
+    labels = c("1st_2022","2nd_2022","3rd_2022","4th_2022","1th_2023"))
+```
+
+
+### Clustering results
+
+```{r,warning=FALSE}
+selected_info =
+  all_info %>% 
+  janitor::clean_names() %>% 
+  select(overall_rating, housing, education, cost_of_living, unemployment, commute, lifestyle) 
+rownames(selected_info) = c("Chappaqua", "Bedford","Rye","Purchase","Scarsdale","Fremont", "Oakland", "San Jose", "Honolulu", "San Francisco", "Boston", "Washington","Los Angeles", "Houston","Seattle")
+
+pca_res <- prcomp(selected_info, scale. = TRUE)
+
+
+
+
+df <- as.data.frame(pca_res$x)
+df$city <- rownames(df)
+
+ggplot(df, aes(PC1, PC2, color = city)) + 
+  geom_point(size = 3) +
+  geom_text(aes(label = city) , vjust = 2) +
+  lims(x = c(-4, 3), y = c(-3, 3)) +
+  theme_bw() +
+  theme(legend.position = "none") 
+```
+
+Honolulu has a rating that is close to the four target areas, so I include the city in the price time series plot. Seattle is also included for a reference as it has a high house price per square feet and it is a well developed city.
+
+```{r,include=FALSE}
+autoplot(pca_res, labels = rownames(selected_info))
+```
+
+### House price time series
+
+
+```{r,warning=FALSE}
+time = colnames(house_price)[3:53]
+df1 = t(house_price[,3:53])
+data_df1 = melt(df1)
+data_df1_named = 
+  data_df1 %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"Honolulu","Seattle")))))),
+         ind = rep(1:length(time),7),
+         HousePrice = Var2)
+ggplot(data_df1_named, aes(x=ind, y=value, color = HousePrice))+
+  geom_line()+
+  labs(
+    y="house price",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,length(time),5),
+    labels = c("Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Nov","Dec","jan"),
+    limits = c(1,length(time)))
+```
+
+```{r}
+data_df1_named %>% group_by(Var2) %>% summarize(mean_price = mean(value))
+```
+
+
+According to the time series plot for house price per square foot, Bedford has the most fluctuated price over the time. It is one of the most competitive homes sell in 18 days. There is a net population gain in Bedford, with a net search flow of approximately 1100. The house price for Bedford decreases after the increment of interest rate. Rye has the highest house price per square foot among target cities (Rye, Purchase, Chappaqua, Bedford) , and it is relatively stable. The house price per square feet for Purchase does not decrease after the rise in interest rate and it has a persistent increasing trend. 
+
+
+### Number of house
+
+
+```{r,warning=FALSE}
+time2 = colnames(num_sold)[3:37]
+num_sold_num = num_sold %>% filter(City_name!="Purchase") %>% filter(City_name!="Seattle") %>% filter(City_name!="Honolulu")
+df2 = t(num_sold_num[,3:37])
+data_df2 = melt(df2)
+data_df2_named = 
+  data_df2 %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", "Scarsdale"))),
+         ind = rep(1:length(time2),4),
+         HousePrice = Var2)
+ggplot(data_df2_named, aes(x=ind, y=value, color = HousePrice))+
+  geom_line()+
+  labs(
+    y="Number of house",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,length(time2),5),
+    labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
+    limits = c(1,length(time2)))
+
+```
+
+```{r}
+data_df2_named %>% group_by(Var2) %>% summarize(mean_number = mean(value))
+```
+
+Purchase data is not available online. Rye is the city that has the highest number of house available among three target cities. 
+
+
+### Medium day on the market
+
+```{r,warning=FALSE}
+time3 = colnames(medium_time)[3:37]
+medium_time_num = medium_time %>% filter(City_name!="Purchase") 
+df3 = t(medium_time_num[,3:37])
+data_df3 = melt(df3)
+data_df3_named = 
+  data_df3 %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu","Seattle"))))),
+         ind = rep(1:length(time3),6),
+         HousePrice = Var2)
+ggplot(data_df3_named, aes(x=ind, y=value, color = HousePrice))+
+  geom_line()+
+  labs(
+    y="Medium day on market",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,length(time2),5),
+    labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
+    limits = c(1,length(time2)))
+
+
+
+```
+
+```{r}
+data_df3_named %>% group_by(Var2) %>% summarize(mean_day = mean(value))
+```
+
+
+Bedford has a relatively high number of days on the market before sold. 
