@@ -219,3 +219,11 @@ summary(lmmodel4)
 ```
 
 
+
+
+
+
+
+#### Best cities to own investment property
+
+There are numerical major cities that have a high potential for investment. There are several items to consider of, namely employment growth, population growth, demographic trends and etc. According to [website](https://www.financialsamurai.com/the-20-best-cities-to-own-investment-property-in-america/), Arlington, Texas, Columbus, Ohio, Charlotte, North Carolina, Austin, Texas, San Antonio, Texas are the five cities chosen from the top 20 best investment property cities. In the dataset, these cities have generally a low price per square foot. 

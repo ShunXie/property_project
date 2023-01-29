@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 The data for median house price per square feet is extracted from [website](https://www.rate.com/research). The data for number of home sold and median days on the market is captured from the [website](https://www.redfin.com/city/30748/NY/Bedford/housing-market.)
 
 
+### Included Area
 
 The excel file created for data analytics contains towns that has the following property:
 
@@ -23,7 +24,7 @@ The excel file created for data analytics contains towns that has the following 
 
 #### Target area
 
-This is the area we focus on. There are five areas, namely Scarsdale, Purchase, Rye, Bedford, Chappaqua.
+This is the area we focus on. There are five areas, namely Scarsdale, Purchase, Rye, Bedford, Chappaqua. Scarsdale is the benchmark, which has a high house price. 
 
 (This is the testing dataset. I create a linear model based on other area to predict the potential house price per square feet. So that it can show if the price still has potential to increase)
 
@@ -31,9 +32,62 @@ This is the area we focus on. There are five areas, namely Scarsdale, Purchase, 
 
 #### High median price per square foot
 
-In accordance to [move.org](https://www.move.org/americas-most-expensive-cities-per-square-foot/) webpage, cities like San Francisco, Boston and New York City have the mosty expensive house price per unit. We are interested in the area that is not a popular city but with a high price.  Therefore, I choose Fremont, CA, Oakland, CA, San Jose, CA and Honolulu. 
+In accordance to [move.org](https://www.move.org/americas-most-expensive-cities-per-square-foot/) webpage, cities like San Francisco, Boston and New York City have the mosty expensive house price per unit. Along with these cities, I also choose Fremont, CA, Oakland, CA, San Jose, CA and Honolulu as focused cities. These cities can give a clear indication of the important factors that should be considered, if the house price is high, or is going to be high in the target city. 
+
+<br>
+
+#### Other chosen city
+
+Seattle and Huston are also two major cities that have a high demand of investment. These cities can also be act as an benchmarks. 
 
 
+
+<br>
+<br>
+
+
+### Variables
+
+#### Table 1
+
+House price per square feet is included in the first table of the data. The table contains all the house price per square feet from 4th Feburary 2022 to 20th January 2023. The mean value for house price per square feet for each month is given in the aggragate columns in the last 12 rows, from BB to BM column in excel.
+
+<br>
+
+#### Table 2
+
+Table 2 consists the number of purchased house unit for every month in the last three years. 
+
+<br>
+
+#### Table 3
+
+Table 3 consists the median time for the housing unit being purchased for every month in the last three years.
+
+<br>
+
+#### Table 4
+
+Table 4 consists all the background information of the housing unit. In order to calculate the change in price over seasons so that the impact of the raise in interest rate can be reviewed, I choose to extract the data from Feb. 18th, May 13th, Aug 12th, Nov 18th and the latest available price, which is Jan 20, 2023. Columns C to K in excel are the calculated house values and the change in price is calculated in column H to K so that we can see the potential impact of rise in interest rate after August.
+
+The rating of each city is also included in the table. This consist the overall rating of each city, as well as the rating for Housing, Education,	Cost of living,	Unemployment,	Commute and	Lifestyle. The rating is in a scale of 12. The scale is represented the following: A+: 12 A: 11 A-: 10 B+: 9 B: 8 B-: 7 C+: 6 C: 5 C-: 4 D+: 3 D: 2 D-: 1. 
+
+The table also contains the demographical details of each chosen cities, such as housing unit, median income and populations.
+
+The last few columns contains the average school rating of top five schools in the city and the total number of schools in the city. The schools are classified into Elementary school, Middle school and High school. 
+
+<br>
+
+
+#### Table 5
+
+It is an incomplete table which may be some potential cities that are worth to invest in. 
+
+<br>
+<br>
+
+
+## Results
 
 
 
