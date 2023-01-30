@@ -1,6 +1,8 @@
 ---
 title: "House_report"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2023-01-28"
 ---
 
@@ -38,7 +40,7 @@ In accordance to [move.org](https://www.move.org/americas-most-expensive-cities-
 
 #### Other chosen city
 
-Seattle and Huston are also two major cities that have a high demand of investment. These cities can also be act as an benchmarks. 
+Seattle and Huston are also two major cities that have a high demand of investment. These cities can also be act as an benchmarks. River Edge is very similar to Chappaqua, so I include it in the data for comparison. 
 
 
 
@@ -72,6 +74,22 @@ Table 4 consists all the background information of the housing unit. In order to
 
 The rating of each city is also included in the table. This consist the overall rating of each city, as well as the rating for Housing, Education,	Cost of living,	Unemployment,	Commute and	Lifestyle. The rating is in a scale of 12. The scale is represented the following: A+: 12 A: 11 A-: 10 B+: 9 B: 8 B-: 7 C+: 6 C: 5 C-: 4 D+: 3 D: 2 D-: 1. 
 
+The description of the rating is evaluated from the following categories: 
+
+* Housing category: considers home inventory availability, median days on market, total new listing and estimated home sales.
+
+* Cost of living: considers median home price and average cost per square foot. 
+
+* Education rating: evaluate the school grade and the percentage of Bachelor degree or greater people in the city.
+
+* Unemployment: considers employment rate only.
+
+* Life style: considers urban life style, including number of restaurant and bars, businesses and net migrations of the city. 
+
+* Commute rating: evaluate the median travel time to work, and percentage of people go to work by bike, public transit or on foot. 
+
+
+
 The table also contains the demographical details of each chosen cities, such as housing unit, median income and populations.
 
 The last few columns contains the average school rating of top five schools in the city and the total number of schools in the city. The schools are classified into Elementary school, Middle school and High school. 
@@ -81,7 +99,20 @@ The last few columns contains the average school rating of top five schools in t
 
 #### Table 5
 
+This is the population table for each target cities. 
+
+<br>
+
+#### Table 6
+
+This is the table which consists the number of house unit available for every month in the last two years. 
+
+<br>
+
+#### Table 7
+
 It is an incomplete table which may be some potential cities that are worth to invest in. 
+
 
 <br>
 <br>
@@ -96,7 +127,7 @@ library("readxl")
 library(ggplot2)
 library(reshape2)
 library(ggfortify)
-
+library(wesanderson)
 ```
 
 
@@ -105,6 +136,8 @@ house_price = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 1)
 num_sold = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 2)
 medium_time = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 3)
 all_info = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 4)
+pop = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 5)
+num_house = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 6)
 ```
 
 
@@ -112,12 +145,12 @@ all_info = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 4)
 
 
 ```{r,include=FALSE}
-all_hp = t(all_info[1:15,3:7])
+all_hp = t(all_info[1:16,3:7])
 data_df_allhp = melt(all_hp)
 data_df_allhp_named = 
   data_df_allhp %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6, "Fremont",ifelse(Var2==7, "Oakland", ifelse(Var2==8, "San Jose", ifelse(Var2==9, "Honolulu", ifelse(Var2==10, "San Francisco", ifelse(Var2==11, "Boston", ifelse(Var2==12,"Washington", ifelse(Var2==13, "Los Angeles", ifelse(Var2==14, "Houston","Seattle")))))))))))))),
-         ind = rep(1:5,15),
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6, "Fremont",ifelse(Var2==7, "Oakland", ifelse(Var2==8, "San Jose", ifelse(Var2==9, "Honolulu", ifelse(Var2==10, "San Francisco", ifelse(Var2==11, "Boston", ifelse(Var2==12,"Washington", ifelse(Var2==13, "Los Angeles", ifelse(Var2==14, "Houston",ifelse(Var2==15,"Seattle","River Edge"))))))))))))))),
+         ind = rep(1:5,16),
          HousePrice = Var2)
 ggplot(data_df_allhp_named, aes(x=ind, y=value, color = HousePrice))+
   geom_line()+
@@ -137,7 +170,7 @@ selected_info =
   all_info %>% 
   janitor::clean_names() %>% 
   select(overall_rating, housing, education, cost_of_living, unemployment, commute, lifestyle) 
-rownames(selected_info) = c("Chappaqua", "Bedford","Rye","Purchase","Scarsdale","Fremont", "Oakland", "San Jose", "Honolulu", "San Francisco", "Boston", "Washington","Los Angeles", "Houston","Seattle")
+rownames(selected_info) = c("Chappaqua", "Bedford","Rye","Purchase","Scarsdale","Fremont", "Oakland", "San Jose", "Honolulu", "San Francisco", "Boston", "Washington","Los Angeles", "Houston","Seattle","River Edge")
 
 pca_res <- prcomp(selected_info, scale. = TRUE)
 
@@ -170,11 +203,11 @@ df1 = t(house_price[,3:53])
 data_df1 = melt(df1)
 data_df1_named = 
   data_df1 %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"Honolulu","Seattle")))))),
-         ind = rep(1:length(time),7),
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4, "Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"Honolulu",ifelse(Var2==7,"Seattle","River Edge"))))))),
+         ind = rep(1:length(time),8),
          HousePrice = Var2)
 ggplot(data_df1_named, aes(x=ind, y=value, color = HousePrice))+
-  geom_line()+
+  geom_line(size=1)+
   labs(
     y="house price",
     x="Date"
@@ -182,7 +215,8 @@ ggplot(data_df1_named, aes(x=ind, y=value, color = HousePrice))+
   scale_x_continuous(
     breaks = seq(1,length(time),5),
     labels = c("Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Nov","Dec","jan"),
-    limits = c(1,length(time)))
+    limits = c(1,length(time)))+
+  scale_color_brewer(palette="Paired")
 ```
 
 ```{r}
@@ -203,11 +237,11 @@ df2 = t(num_sold_num[,3:37])
 data_df2 = melt(df2)
 data_df2_named = 
   data_df2 %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", "Scarsdale"))),
-         ind = rep(1:length(time2),4),
-         HousePrice = Var2)
-ggplot(data_df2_named, aes(x=ind, y=value, color = HousePrice))+
-  geom_line()+
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Seattle","River Edge")))),
+         ind = rep(1:length(time2),5),
+         Numhouse = Var2)
+ggplot(data_df2_named, aes(x=ind, y=value, color = Numhouse))+
+  geom_line(size=1)+
   labs(
     y="Number of house",
     x="Date"
@@ -215,7 +249,9 @@ ggplot(data_df2_named, aes(x=ind, y=value, color = HousePrice))+
   scale_x_continuous(
     breaks = seq(1,length(time2),5),
     labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
-    limits = c(1,length(time2)))
+    limits = c(1,length(time2)))+
+    scale_color_brewer(palette="Paired")
+
 
 ```
 
@@ -235,11 +271,11 @@ df3 = t(medium_time_num[,3:37])
 data_df3 = melt(df3)
 data_df3_named = 
   data_df3 %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu","Seattle"))))),
-         ind = rep(1:length(time3),6),
-         HousePrice = Var2)
-ggplot(data_df3_named, aes(x=ind, y=value, color = HousePrice))+
-  geom_line()+
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu",ifelse(Var2==6,"Seattle","River Edge")))))),
+         ind = rep(1:length(time3),7),
+         MedianTime = Var2)
+ggplot(data_df3_named, aes(x=ind, y=value, color = MedianTime))+
+  geom_line(size=1)+
   labs(
     y="Medium day on market",
     x="Date"
@@ -247,7 +283,8 @@ ggplot(data_df3_named, aes(x=ind, y=value, color = HousePrice))+
   scale_x_continuous(
     breaks = seq(1,length(time2),5),
     labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
-    limits = c(1,length(time2)))
+    limits = c(1,length(time2)))+
+    scale_color_brewer(palette="Paired")
 
 
 
@@ -258,4 +295,39 @@ data_df3_named %>% group_by(Var2) %>% summarize(mean_day = mean(value))
 ```
 
 
+
 Bedford has a relatively high number of days on the market before sold. 
+
+
+### Home for sale
+
+```{r}
+time4 = colnames(num_house)[3:26]
+num_house_num = num_house %>% filter(City_name!="Chappaqua") 
+df4 = t(num_house_num[,3:26])
+data_df4 = melt(df4)
+data_df4_named = 
+  data_df4 %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu",ifelse(Var2==6,"Seattle","River Edge")))))),
+         ind = rep(1:length(time4),7),
+         NumHouse = Var2)
+ggplot(data_df4_named, aes(x=ind, y=value, color = NumHouse))+
+  geom_line(size=1)+
+  labs(
+    y="Number of house on market",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,length(time4),4),
+    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
+    limits = c(1,length(time4)))+
+    scale_color_brewer(palette="Paired")
+
+
+```
+```{r}
+data_df4_named %>% group_by(Var2) %>% summarize(mean_number = mean(value))
+```
+
+
+
