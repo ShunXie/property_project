@@ -1,0 +1,265 @@
+---
+title: "New Report"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-02-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r,echo=FALSE,message=FALSE}
+library("tidyverse")
+library("dplyr")
+library("readxl")
+library(ggplot2)
+library(reshape2)
+library(ggfortify)
+library(wesanderson)
+```
+
+```{r,echo=FALSE}
+house_price = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 1)
+num_sold = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 2)
+medium_time = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 3)
+all_info = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 4)
+pop = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 5)
+num_house = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 6)
+sale_to_list = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 7)
+hp_three_yr = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 8)
+```
+
+## Scatter plot for chappaqua and scarsdale
+
+```{r}
+all_val = 
+  hp_three_yr %>%
+  filter(City_name=="Chappaqua" | City_name=="Scarsdale") %>% 
+  pivot_longer(
+    `43831`:`44927`,
+    names_to = "date"
+  ) %>% 
+  mutate(date_val = as.Date(as.numeric(date),origin="1899-12-30"),
+         ind = seq(1,72,1))
+
+ggplot(all_val,aes(x=value, y=ind, color = City_name))+
+  geom_point()+
+  labs(title="Scatter plot for Chappaqua and Scarsdale")
+```
+
+
+The standard deviation of Chappaqua is ```r round(sd(as.numeric(hp_three_yr[1,][-1:-2])),3)``` with a range of ```r max(as.numeric(hp_three_yr[1,][-1:-2]))-min(as.numeric(hp_three_yr[1,][-1:-2]))``` dollar per square feet. Scarsdale, on the other hand, has a standard deviation of ```r round(sd(as.numeric(hp_three_yr[5,][-1:-2])),3)``` with a range of ```r max(as.numeric(hp_three_yr[5,][-1:-2]))-min(as.numeric(hp_three_yr[5,][-1:-2]))``` dollar per square feet. The table shows all the information:
+
+```{r,echo=FALSE}
+all_val %>% 
+  group_by(City_name) %>% 
+  summarize(
+    mean_val = mean(value),
+    sd_val = sd(value),
+    range_dollar = max(value)-min(value)
+  )
+```
+
+
+
+\newpage
+
+
+
+## Mean value for each half year
+
+
+
+```{r,echo=FALSE}
+summary_half_yr = 
+  hp_three_yr %>%
+  pivot_longer(col = `43831`:`44927`,names_to = "date") %>%
+  mutate(year_half = ifelse(date<44012,"first_2020",ifelse(date<44196,"second_2020",ifelse(date<44377,"first_2021",ifelse(date<44550,"second_2021",ifelse(date<44742,"first_2022","second_2022")))))) %>% 
+  group_by(City_name,year_half) %>% 
+  summarize(
+    mean_val = round(mean(value),2)
+  ) %>% 
+  ungroup() %>% 
+  pivot_wider(
+    names_from=year_half,
+    values_from = mean_val)
+summary_half_yr
+```
+
+
+
+```{r,echo=FALSE}
+cleaned_summ = summary_half_yr %>% 
+  pivot_longer(col = first_2020:second_2022, names_to = "year") %>% 
+  mutate(time = ifelse(year == "first_2020",1,ifelse(year == "second_2020",2,ifelse(year == "first_2021",3,ifelse(year == "second_2021",4,ifelse(year == "first_2022",5,6))))))
+
+ggplot(cleaned_summ, aes(x=time, y=value, color = City_name))+
+  geom_line(size=1)+
+  labs(
+    y="house price",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,6,1),
+    labels = c("2020_1st","2020_2nd","2021_1st","2021_2nd","2022_1st","2022_2nd"),
+    limits = c(1,6))+
+  scale_color_brewer(palette="Paired")+
+  labs(title="Time series plot for mean value every half year")
+```
+
+
+\newpage
+
+## Index
+
+### Yearly index
+
+```{r,echo=FALSE}
+yearly_index = 
+  summary_half_yr %>% 
+  mutate_at(vars(first_2020:second_2022), list(index = ~./first_2020)) %>% 
+  select(City_name,ends_with("index")) %>% 
+  select(City_name, first_2020_index, second_2020_index,first_2021_index, second_2021_index,first_2022_index, second_2022_index)
+  
+yearly_index
+```
+
+Yearly index plot:
+
+```{r,echo=FALSE}
+cleaned_year_index = yearly_index %>% 
+  pivot_longer(col = first_2020_index:second_2022_index, names_to = "year") %>% 
+  mutate(time = ifelse(year == "first_2020_index",1,ifelse(year == "second_2020_index",2,ifelse(year == "first_2021_index",3,ifelse(year == "second_2021_index",4,ifelse(year == "first_2022_index",5,6))))))
+
+ggplot(cleaned_year_index, aes(x=time, y=value, color = City_name))+
+  geom_line(size=1)+
+  labs(
+    y="index value",
+    x="Half year"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,6,1),
+    labels = c("2020_1st","2020_2nd","2021_1st","2021_2nd","2022_1st","2022_2nd"),
+    limits = c(1,6))+
+  scale_color_brewer(palette="Paired")+
+  labs(title="Index every half year in according to mean value of first half year of 2020")
+```
+
+### Quarterly index
+
+
+```{r,echo=FALSE,warning=FALSE}
+summary_quarter_yr = 
+  hp_three_yr %>%
+  pivot_longer(col = `43831`:`44927`,names_to = "date") %>%
+  mutate(year_quarter = ifelse(date<43912,"first_2020",ifelse(date<44012,"second_2020",ifelse(date<44100,"third_2020",ifelse(date<44190,"fourth_2020",ifelse(date<44280,"first_2021",ifelse(date<44377,"second_2021",ifelse(date<44467,"third_2021",ifelse(date<44557,"fourth_2021", ifelse(date<44647,"first_2022",ifelse(date<44737,"second_2022",ifelse(date<44827,"third_2022","fourth_2022")))))))))))) %>%
+  group_by(City_name,year_quarter) %>% 
+  summarize(
+    mean_val = round(mean(value),2)
+  ) %>% 
+  ungroup() %>% 
+  pivot_wider(
+    names_from=year_quarter,
+    values_from = mean_val)
+
+quarterly_index = 
+  summary_quarter_yr %>% 
+  mutate_at(vars(first_2020:third_2022), list(index = ~./first_2020)) %>% 
+  select(City_name,ends_with("index")) %>% 
+  select(City_name, first_2020_index, second_2020_index, third_2020_index, fourth_2020_index,first_2021_index, second_2021_index, third_2021_index, fourth_2021_index,first_2022_index, second_2022_index, third_2022_index, fourth_2022_index)
+quarterly_index[,1:5]
+quarterly_index[,6:9]
+quarterly_index[,10:13]
+
+
+```
+
+
+```{r,echo=FALSE}
+cleaned_quarter_index = 
+  quarterly_index %>% 
+  pivot_longer(col = first_2020_index:fourth_2022_index, names_to = "year") %>% 
+  mutate(time = ifelse(year == "first_2020_index",1,ifelse(year == "second_2020_index",2,ifelse(year == "third_2020_index",3,ifelse(year == "fourth_2020_index",4,ifelse(year == "first_2021_index",5,ifelse(year == "second_2021_index",6,ifelse(year == "third_2021_index",7,ifelse(year == "fourth_2021_index",8,ifelse(year == "first_2022_index",9,ifelse(year == "second_2022_index",10,ifelse(year == "third_2022_index",11,12))))))))))))
+
+ggplot(cleaned_quarter_index, aes(x=time, y=value, color = City_name))+
+  geom_line(size=1)+
+  labs(
+    y="index value",
+    x="Quarter year"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,12,2),
+    labels = c("2020_1st","2020_3rd","2021_1st","2021_3rd","2022_1st","2022_3rd"),
+    limits = c(1,12))+
+  scale_color_brewer(palette="Paired")+
+  labs(title="Index every quarter year in according to mean value of first quarter of 2020")
+
+```
+
+
+\newpage
+
+
+
+
+## Price distribution for last three month
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+time_last = colnames(house_price)[42:54]
+east_coast_hp = house_price %>% filter(City_name == "Chappaqua" | City_name == "Scarsdale" |City_name == "Bedford" | City_name == "River Edge")
+df_last = t(east_coast_hp[,42:54])
+data_df_last = melt(df_last)
+data_df_last_named = 
+  data_df_last %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Scarsdale","River Edge"))),
+         ind = rep(1:length(time_last),4),
+         City_name = Var2)
+
+ggplot(data_df_last_named, aes(x=ind, y=value, color = City_name))+
+  geom_line(size=1)+
+  labs(
+    title="Price distribution for Nov. 2022, Dec. 2022 and Jan. 2023",
+    y="House Price",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = seq(1,length(time_last),3),
+    labels = c("Nov_04_2022","Nov_25_2022","Dec_16_2022","Jan_06_2023","Jan_27_2023"),
+    limits = c(1,length(time_last)))
+```
+
+
+
+```{r,echo=FALSE}
+all_val_plot = 
+  east_coast_hp %>%
+  select(-State) %>% 
+  select(City_name,"Nov_04_2022":"Jan_27_2023") %>% 
+  pivot_longer(
+    Nov_04_2022:Jan_27_2023,
+    names_to = "date"
+  ) %>% 
+  mutate(ind = seq(1,length(time_last)*4,1))
+
+ggplot(all_val_plot,aes(x=value, y=ind, color = City_name))+
+  geom_point()+
+  labs(title = "Scatter plot of house price over all values")
+```
+
+Summary of the four cities in the range from November 2022 to January 2023
+
+```{r,echo=FALSE}
+all_val_plot %>% 
+  group_by(City_name) %>% 
+  summarize(
+    mean_val = mean(value),
+    sd_val = sd(value),
+    range_dollar = max(value)-min(value)
+  )
+```
+
+
