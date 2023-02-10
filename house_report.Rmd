@@ -152,6 +152,7 @@ pop = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 5)
 num_house = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 6)
 sale_to_list = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 7)
 hp_three_yr = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 8)
+hp_agg = read_excel("neighborhood_comparison/house_price.xlsx", sheet = 9)
 ```
 
 
@@ -253,20 +254,20 @@ dfnum = t(hp_three_yr[,3:38])
 data_dfnum = melt(dfnum)
 data_dfnum_named = 
   data_dfnum %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase","Scarsdale")))),
-         ind = rep(1:length(timed),5),
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale","River Edge"))))),
+         ind = rep(1:length(timed),6),
          hp_threeyr = Var2) %>% 
   filter(hp_threeyr!="Rye" & hp_threeyr!="Seattle")
 ggplot(data_dfnum_named, aes(x=ind, y=value, color = hp_threeyr))+
   geom_line(size=1)+
   labs(
-    title = "Median house price for three years",
+    title = "Median house price per square feet for three years",
     y="House price three year",
     x="Date"
   )+
   scale_x_continuous(
     breaks = timelist,
-    labels = c("Jan_20","Jun_20","Nov_20","Apr_21","Sep_21","Feb_22","Jul_22","Jan_23"),
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Jan_23"),
     limits = c(1,length(timed)))
 
 ```
@@ -280,6 +281,8 @@ ggplot(data_dfnum_named, aes(x=ind, y=value, color = hp_threeyr))+
 
 ```{r,warning=FALSE}
 time2 = colnames(num_sold)[3:37]
+timeseq2 = seq(1,length(time2),5)
+timeseq2 = append(timeseq2,35)
 num_sold_num = num_sold %>% filter(City_name!="Purchase") %>% filter(City_name!="Seattle") %>% filter(City_name!="Honolulu")
 df2 = t(num_sold_num[,3:37])
 data_df2 = melt(df2)
@@ -292,12 +295,13 @@ data_df2_named =
 ggplot(data_df2_named, aes(x=ind, y=value, color = Numhouse))+
   geom_line(size=1)+
   labs(
+    title = "Number of house sold",
     y="Number of house",
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time2),5),
-    labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
+    breaks = timeseq2,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Jan_23"),
     limits = c(1,length(time2)))
 
 ```
@@ -313,27 +317,28 @@ Purchase data is not available online. Rye is the city that has the highest numb
 
 ```{r,warning=FALSE}
 time3 = colnames(medium_time)[3:37]
+timeseq3 = seq(1,length(time3),5)
+timeseq3 = append(timeseq3,35)
 medium_time_num = medium_time %>% filter(City_name!="Purchase") 
 df3 = t(medium_time_num[,3:37])
 data_df3 = melt(df3)
 data_df3_named = 
   data_df3 %>% 
-  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu",ifelse(Var2==6,"Seattle","River Edge")))))),
-         ind = rep(1:length(time3),7),
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu",ifelse(Var2==6,"Seattle",ifelse(Var2==7,"River Edge", "New York State"))))))),
+         ind = rep(1:length(time3),8),
          MedianTime = Var2) %>% 
   filter(MedianTime!="Honolulu" & MedianTime!="Seattle" & MedianTime!="Rye")
 ggplot(data_df3_named, aes(x=ind, y=value, color = MedianTime))+
   geom_line(size=1)+
   labs(
-    y="Medium day on market",
+    title = "Median day on market",
+    y="Medium day on market for three years",
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time2),5),
-    labels = c("Jan_20","May_20","Oct_20","Mar_21","Aug_21","Jan_22","Jun_22"),
-    limits = c(1,length(time2)))+
-    scale_color_brewer(palette="Paired")
-
+    breaks = timeseq2,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(time2)))
 
 
 ```
@@ -350,34 +355,90 @@ Bedford has a relatively high number of days on the market before sold.
 ### Home for sale
 
 ```{r}
-time4 = colnames(num_house)[3:26]
-num_house_num = num_house %>% filter(City_name!="Chappaqua") 
-df4 = t(num_house_num[,3:26])
-data_df4 = melt(df4)
-data_df4_named = 
-  data_df4 %>% 
-  mutate(Var2 = ifelse(Var2==1, "Bedford", ifelse(Var2==2, "Rye",ifelse(Var2==3,"Purchase",ifelse(Var2==4,"Scarsdale",ifelse(Var2==5,"Honolulu",ifelse(Var2==6,"Seattle","River Edge")))))),
-         ind = rep(1:length(time4),7),
-         NumHouse = Var2) %>% 
- filter(NumHouse!="Honolulu" & NumHouse!="Seattle" & NumHouse!="Rye"& NumHouse!="Scarsdale")
-ggplot(data_df4_named, aes(x=ind, y=value, color = NumHouse))+
+
+timen = colnames(num_house)[3:38]
+timelistn = seq(1,length(timen),5)
+#timelist = append(timelisttemp,length(timed))
+dfnumh = t(num_house[,3:38])
+data_dfnumh = melt(dfnumh)
+data_dfnumh_named = 
+  data_dfnumh %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale","River Edge"))))),
+         ind = rep(1:length(timen),6),
+         inventory = Var2) %>% 
+  filter(inventory!="Rye" & inventory!="Seattle"& inventory!="Scarsdale")
+ggplot(data_dfnumh_named, aes(x=ind, y=value, color = inventory))+
   geom_line(size=1)+
   labs(
-    y="Number of house on market",
+    title = "Inventory for three years",
+    y="# of house",
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))
+    breaks = timelistn,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Jan_23"),
+    limits = c(1,length(timed)))
 
 
 ```
+
+
+
+
+### Sale to list price
+
 ```{r}
-data_df4_named %>% group_by(Var2) %>% summarize(mean_number = mean(value))
+
+times = colnames(sale_to_list)[3:37]
+timelists = seq(1,length(times),5)
+timelists = append(timelists,length(times))
+dfnums = t(sale_to_list[,3:37])
+data_dfnums = melt(dfnums)
+data_dfnums_named = 
+  data_dfnums %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"River Edge","New York State")))))),
+         ind = rep(1:length(times),7),
+         sale_to_list = Var2) %>% 
+  filter(sale_to_list!="Rye" & sale_to_list!="Seattle"&sale_to_list!="Purchase")
+ggplot(data_dfnums_named, aes(x=ind, y=value, color = sale_to_list))+
+  geom_line(size=1)+
+  labs(
+    title = "Sale to list price in 3 years",
+    y="ratio",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = timelists,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(times)))
 ```
 
 
+```{r}
+
+timehp = colnames(hp_agg)[3:37]
+timelisthp = seq(1,length(timehp),5)
+timelisthp = append(timelisthp,length(timehp))
+dfnumhp = t(hp_agg[,3:37])
+data_dfnumhp = melt(dfnumhp)
+data_dfnumhp_named = 
+  data_dfnumhp %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"River Edge","New York State")))))),
+         ind = rep(1:length(timehp),7),
+         median_sale = Var2) %>% 
+  filter(median_sale!="Rye" & median_sale!="Seattle"&median_sale!="Purchase")
+ggplot(data_dfnumhp_named, aes(x=ind, y=value, color = median_sale))+
+  geom_line(size=1)+
+  labs(
+    title = "Median sale of house price in total in three year",
+    y="house price",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = timelisthp,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))
+```
 
 
 
@@ -395,26 +456,28 @@ This is the plotting that stores all the house price, number of available house,
 
 
 ```{r}
+#median sale is too variate
+
 std <- function(x){
   return (x-mean(x))/sd(x)
 }
 
 
 #take value from year 2021
-cha_num_sold = as.numeric(num_sold[1,][15:37]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-cha_sale_time = as.numeric(medium_time[1,][15:38][-23]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-cha_inventory =  as.numeric(num_house[1,][3:26][-23]) %>% std()
-cha_sale_to_list =  as.numeric(sale_to_list[1,][15:37]) %>% std()
-cha_hp =  as.numeric(hp_three_yr[1,][15:37]) %>% std()
+cha_num_sold = as.numeric(num_sold[1,][3:37]) %>% std()
+cha_sale_time = as.numeric(medium_time[1,][3:37]) %>% std()
+cha_inventory =  as.numeric(num_house[1,][3:37]) %>% std()
+cha_sale_to_list =  as.numeric(sale_to_list[1,][3:37]) %>% std()
+cha_hp =  as.numeric(hp_three_yr[1,][3:37]) %>% std()
+ch_median_sale =  as.numeric(hp_agg[1,][3:37]) %>% std()
 
-date = seq(1,23,1)
+date = seq(1,35,1)
 #time_val = format(date, "%B %Y")
 #time_val[23]="December 2022"
+timelistall = seq(1,length(timehp),5)
+timelistall = append(timelistall,length(timehp))
 
-
-chapa_df = as.data.frame(cbind(date,cha_num_sold,cha_sale_time,cha_inventory,cha_sale_to_list,cha_hp)) 
+chapa_df = as.data.frame(cbind(date,cha_num_sold,cha_sale_time,cha_inventory,cha_sale_to_list,cha_hp,ch_median_sale)) 
 chapa_df_longer <- pivot_longer(chapa_df, c(cha_num_sold,cha_sale_time,cha_inventory,cha_sale_to_list,cha_hp)) %>% na.omit()
 
 ggplot(chapa_df_longer, aes(x=date, y=value, color = name))+
@@ -424,9 +487,9 @@ ggplot(chapa_df_longer, aes(x=date, y=value, color = name))+
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))+
+    breaks = timelistall,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))+
   ggtitle("Chappaqua")
 ```
 
@@ -434,21 +497,22 @@ ggplot(chapa_df_longer, aes(x=date, y=value, color = name))+
 
 
 ```{r,echo=FALSE}
-#take value from year 2021
-bed_num_sold = as.numeric(num_sold[2,][15:37]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-bed_sale_time = as.numeric(medium_time[2,][15:38][-23]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-bed_inventory =  as.numeric(num_house[2,][3:26][-23]) %>% std()
-bed_sale_to_list =  as.numeric(sale_to_list[2,][15:37]) %>% std()
-bed_hp =  as.numeric(hp_three_yr[2,][15:37]) %>% std()
 
-date = seq(1,23,1)
+#take value from year 2021
+bed_num_sold = as.numeric(num_sold[2,][3:37]) %>% std()
+bed_sale_time = as.numeric(medium_time[2,][3:37]) %>% std()
+bed_inventory =  as.numeric(num_house[2,][3:37]) %>% std()
+bed_sale_to_list =  as.numeric(sale_to_list[2,][3:37]) %>% std()
+bed_hp =  as.numeric(hp_three_yr[2,][3:37]) %>% std()
+bed_median_sale =  as.numeric(hp_agg[2,][3:37]) %>% std()
+
+date = seq(1,35,1)
 #time_val = format(date, "%B %Y")
 #time_val[23]="December 2022"
+timelistall = seq(1,length(timehp),5)
+timelistall = append(timelistall,length(timehp))
 
-
-bed_df = as.data.frame(cbind(date,bed_num_sold,bed_sale_time,bed_inventory,bed_sale_to_list,bed_hp)) 
+bed_df = as.data.frame(cbind(date,bed_num_sold,bed_sale_time,bed_inventory,bed_sale_to_list,bed_hp,bed_median_sale)) 
 bed_df_longer <- pivot_longer(bed_df, c(bed_num_sold,bed_sale_time,bed_inventory,bed_sale_to_list,bed_hp)) %>% na.omit()
 
 ggplot(bed_df_longer, aes(x=date, y=value, color = name))+
@@ -458,66 +522,35 @@ ggplot(bed_df_longer, aes(x=date, y=value, color = name))+
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))+
+    breaks = timelistall,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))+
   ggtitle("Bedford")
 ```
 
 
-#### Rye
 
-
-
-
-```{r,echo=FALSE}
-#take value from year 2021
-rye_num_sold = as.numeric(num_sold[3,][15:37]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-rye_sale_time = as.numeric(medium_time[3,][15:38][-23]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-rye_inventory =  as.numeric(num_house[3,][3:26][-23]) %>% std()
-rye_sale_to_list =  as.numeric(sale_to_list[3,][15:37]) %>% std()
-rye_hp =  as.numeric(hp_three_yr[3,][15:37]) %>% std()
-
-date = seq(1,23,1)
-#time_val = format(date, "%B %Y")
-#time_val[23]="December 2022"
-
-
-rye_df = as.data.frame(cbind(date,rye_num_sold,rye_sale_time,rye_inventory,rye_sale_to_list,rye_hp)) 
-rye_df_longer <- pivot_longer(rye_df, c(rye_num_sold,rye_sale_time,rye_inventory,rye_sale_to_list,rye_hp)) %>% na.omit()
-
-ggplot(rye_df_longer, aes(x=date, y=value, color = name))+
-  geom_line(size=1)+
-  labs(
-    y="Value",
-    x="Date"
-  )+
-  scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))+
-  ggtitle("Rye")
-```
 
 
 
 #### Purchase
 
 ```{r,echo=FALSE}
-#take value from year 2021
-pur_num_sold = as.numeric(num_sold[4,][15:37]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-pur_sale_time = as.numeric(medium_time[4,][15:38][-23]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-pur_inventory =  as.numeric(num_house[4,][3:26][-23]) %>% std()
-pur_sale_to_list =  as.numeric(sale_to_list[4,][15:37]) %>% std()
-pur_hp =  as.numeric(hp_three_yr[4,][15:37]) %>% std()
 
-date = seq(1,23,1)
+
+#take value from year 2021
+pur_num_sold = as.numeric(num_sold[4,][3:37]) %>% std()
+pur_sale_time = as.numeric(medium_time[4,][3:37]) %>% std()
+pur_inventory =  as.numeric(num_house[4,][3:37]) %>% std()
+pur_sale_to_list =  as.numeric(sale_to_list[4,][3:37]) %>% std()
+pur_hp =  as.numeric(hp_three_yr[4,][3:37]) %>% std()
+pur_median_sale =  as.numeric(hp_agg[4,][3:37]) %>% std()
+
+date = seq(1,35,1)
 #time_val = format(date, "%B %Y")
 #time_val[23]="December 2022"
+timelistall = seq(1,length(timehp),5)
+timelistall = append(timelistall,length(timehp))
 
 
 pur_df = as.data.frame(cbind(date,pur_num_sold,pur_sale_time,pur_inventory,pur_sale_to_list,pur_hp)) 
@@ -530,9 +563,9 @@ ggplot(pur_df_longer, aes(x=date, y=value, color = name))+
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))+
+    breaks = timelistall,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))+
   ggtitle("Purchase")
 ```
 
@@ -541,18 +574,21 @@ ggplot(pur_df_longer, aes(x=date, y=value, color = name))+
 #### Scarsdale
 
 ```{r,echo=FALSE}
-#take value from year 2021
-scar_num_sold = as.numeric(num_sold[5,][15:37]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-scar_sale_time = as.numeric(medium_time[5,][15:38][-23]) %>% std()
-#get rid of November as not all dataset contains Nov, this is the 25th row
-scar_inventory =  as.numeric(num_house[5,][3:26][-23]) %>% std()
-scar_sale_to_list =  as.numeric(sale_to_list[5,][15:37]) %>% std()
-scar_hp =  as.numeric(hp_three_yr[5,][15:37]) %>% std()
 
-date = seq(1,23,1)
+
+#take value from year 2021
+scar_num_sold = as.numeric(num_sold[5,][3:37]) %>% std()
+scar_sale_time = as.numeric(medium_time[5,][3:37]) %>% std()
+scar_inventory =  as.numeric(num_house[5,][3:37]) %>% std()
+scar_sale_to_list =  as.numeric(sale_to_list[5,][3:37]) %>% std()
+scar_hp =  as.numeric(hp_three_yr[5,][3:37]) %>% std()
+scar_median_sale =  as.numeric(hp_agg[5,][3:37]) %>% std()
+
+date = seq(1,35,1)
 #time_val = format(date, "%B %Y")
 #time_val[23]="December 2022"
+timelistall = seq(1,length(timehp),5)
+timelistall = append(timelistall,length(timehp))
 
 
 scar_df = as.data.frame(cbind(date,scar_num_sold,scar_sale_time,scar_inventory,scar_sale_to_list,scar_hp)) 
@@ -565,18 +601,57 @@ ggplot(scar_df_longer, aes(x=date, y=value, color = name))+
     x="Date"
   )+
   scale_x_continuous(
-    breaks = seq(1,length(time4),4),
-    labels = c("Jan_21","May_21","Sep_21","Jan_22","May_22","Sep_22"),
-    limits = c(1,length(time4)))+
+    breaks = timelistall,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))+
   ggtitle("Scarsdale")
 ```
+
+
+
+#### River Edge
+
+```{r,echo=FALSE}
+
+
+#take value from year 2021
+re_num_sold = as.numeric(num_sold[8,][3:37]) %>% std()
+re_sale_time = as.numeric(medium_time[8,][3:37]) %>% std()
+re_inventory =  as.numeric(num_house[6,][3:37]) %>% std()
+re_sale_to_list =  as.numeric(sale_to_list[6,][3:37]) %>% std()
+re_hp =  as.numeric(hp_three_yr[6,][3:37]) %>% std()
+re_median_sale =  as.numeric(hp_agg[6,][3:37]) %>% std()
+
+date = seq(1,35,1)
+#time_val = format(date, "%B %Y")
+#time_val[23]="December 2022"
+timelistall = seq(1,length(timehp),5)
+timelistall = append(timelistall,length(timehp))
+
+
+re_df = as.data.frame(cbind(date,re_num_sold,re_sale_time,re_inventory,re_sale_to_list,re_hp)) 
+re_df_longer <- pivot_longer(re_df, c(re_num_sold,re_sale_time,re_inventory,re_sale_to_list,re_hp)) %>% na.omit()
+
+ggplot(re_df_longer, aes(x=date, y=value, color = name))+
+  geom_line(size=1)+
+  labs(
+    y="Value",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = timelistall,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))+
+  ggtitle("River Edge")
+```
+
 
 \newpage
 
 
 ## Scatter plot for chappaqua and scarsdale
 
-```{r}
+
 all_val = 
   hp_three_yr %>%
   filter(City_name=="Chappaqua" | City_name=="Scarsdale") %>% 
@@ -590,12 +665,12 @@ all_val =
 ggplot(all_val,aes(x=value, y=ind, color = City_name))+
   geom_point()+
   labs(title="Scatter plot for Chappaqua and Scarsdale")
-```
+
 
 
 The standard deviation of Chappaqua is ```r round(sd(as.numeric(hp_three_yr[1,][-1:-2])),3)``` with a range of ```r max(as.numeric(hp_three_yr[1,][-1:-2]))-min(as.numeric(hp_three_yr[1,][-1:-2]))``` dollar per square feet. Scarsdale, on the other hand, has a standard deviation of ```r round(sd(as.numeric(hp_three_yr[5,][-1:-2])),3)``` with a range of ```r max(as.numeric(hp_three_yr[5,][-1:-2]))-min(as.numeric(hp_three_yr[5,][-1:-2]))``` dollar per square feet. The table shows all the information:
 
-```{r,echo=FALSE}
+
 all_val %>% 
   group_by(City_name) %>% 
   summarize(
@@ -603,7 +678,7 @@ all_val %>%
     sd_val = sd(value),
     range_dollar = max(value)-min(value)
   )
-```
+
 
 
 
@@ -615,7 +690,6 @@ all_val %>%
 
 
 
-```{r,echo=FALSE}
 summary_half_yr = 
   hp_three_yr %>%
   pivot_longer(col = `43831`:`44927`,names_to = "date") %>%
@@ -629,11 +703,11 @@ summary_half_yr =
     names_from=year_half,
     values_from = mean_val)
 summary_half_yr
-```
 
 
 
-```{r,echo=FALSE}
+
+
 cleaned_summ = summary_half_yr %>% 
   pivot_longer(col = first_2020:second_2022, names_to = "year") %>% 
   mutate(time = ifelse(year == "first_2020",1,ifelse(year == "second_2020",2,ifelse(year == "first_2021",3,ifelse(year == "second_2021",4,ifelse(year == "first_2022",5,6))))))
@@ -650,12 +724,79 @@ ggplot(cleaned_summ, aes(x=time, y=value, color = City_name))+
     limits = c(1,6))+
   scale_color_brewer(palette="Paired")+
   labs(title="Time series plot for mean value every half year")
-```
+
 
 
 \newpage
 
 ## Index
+
+### monthly index 
+
+```{r}
+
+  
+monthly_index = 
+  hp_three_yr %>% 
+  mutate_at(vars(`43862`:`44927`), list(index = ~./`43862`)) %>% 
+  select(City_name,ends_with("index")) 
+  
+
+timed = colnames(hp_three_yr)[3:38]
+timelist = seq(1,length(timed),5)
+#timelist = append(timelisttemp,length(timed))
+dfnum = t(monthly_index[,2:37])
+data_dfnum = melt(dfnum)
+data_dfnum_named = 
+  data_dfnum %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale","River Edge"))))),
+         ind = rep(1:length(timed),6),
+         hp_index = Var2) %>% 
+  filter(hp_index!="Rye" & hp_index!="Seattle")
+ggplot(data_dfnum_named, aes(x=ind, y=value, color = hp_index))+
+  geom_line(size=1)+
+  labs(
+    title = "Index of median house price per square feet for three years",
+    y="House price index",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = timelist,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Jan_23"),
+    limits = c(1,length(timed)))
+```
+
+```{r}
+monthly_index_agg = 
+  hp_agg %>% 
+  mutate_at(vars(`43862`:`44896`), list(index = ~./`43862`)) %>% 
+  select(City_name,ends_with("index"))
+
+timehp = colnames(hp_agg)[3:37]
+timelisthp = seq(1,length(timehp),5)
+timelisthp = append(timelisthp,length(timehp))
+dfnumhp = t(monthly_index_agg[,2:36])
+data_dfnumhp = melt(dfnumhp)
+data_dfnumhp_named = 
+  data_dfnumhp %>% 
+  mutate(Var2 = ifelse(Var2==1,"Chappaqua",ifelse(Var2==2, "Bedford", ifelse(Var2==3, "Rye", ifelse(Var2==4,"Purchase",ifelse(Var2==5,"Scarsdale",ifelse(Var2==6,"River Edge","New York State")))))),
+         ind = rep(1:length(timehp),7),
+         total_hp_index = Var2) %>% 
+  filter(total_hp_index!="Rye" & total_hp_index!="Seattle"&total_hp_index!="Purchase")
+ggplot(data_dfnumhp_named, aes(x=ind, y=value, color = total_hp_index))+
+  geom_line(size=1)+
+  labs(
+    title = "Index of median sale of house price in total in three year",
+    y="house price",
+    x="Date"
+  )+
+  scale_x_continuous(
+    breaks = timelisthp,
+    labels = c("Feb_20","Jul_20","Dec_20","May_21","Oct_21","Mar_22","Aug_22","Dec_23"),
+    limits = c(1,length(timehp)))
+```
+
+
 
 ### Yearly index
 
